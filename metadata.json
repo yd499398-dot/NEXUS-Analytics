@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Remix: Remix: RetainAI Path Visualizer",
+  "description": "Interactive cross-platform tool predicting employee attrition risk with 3D decision path visualizations and comprehensive HR trend analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
