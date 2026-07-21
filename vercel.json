@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://nexus-backend.onrender.com/api/:path*"
+      "destination": "https://nexus-analytics-k3w2.onrender.com/api/:path*"
     }
   ]
 }
