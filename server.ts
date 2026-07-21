@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors'; // 👈 1. IMPORT CORS
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
@@ -18,7 +19,13 @@ const ai = new GoogleGenAI({
 async function startServer() {
   const app = express();
   app.set('trust proxy', 1);
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000; // 👈 Uses Render's port dynamically
+
+  // 👈 2. ENABLE CORS MIDDLEWARE (Required for Vercel -> Render cross-origin calls)
+  app.use(cors({
+    origin: '*', // Allows Vercel frontend requests
+    credentials: true,
+  }));
 
   // Security Headers
   app.use(helmet({
@@ -28,7 +35,7 @@ async function startServer() {
   // Global Rate Limiting
   const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    max: 100, // Limit each IP to 100 requests per `window`
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
@@ -93,7 +100,7 @@ async function startServer() {
         return res.status(400).json({ error: 'Please use an authentic professional email identity. Generic dummy or placeholder names are blocked.' });
       }
 
-      // Password strength validation: minimum 8 characters, at least 1 uppercase, 1 lowercase, 1 number, 1 special char
+      // Password strength validation
       const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
       if (!passRegex.test(password)) {
         return res.status(400).json({ 
@@ -277,8 +284,6 @@ async function startServer() {
 
       res.json(analysisData);
     } catch (error: any) {
-      // Silent fallback applied
-      
       const { salary, commute, satisfaction, lang, emailVolumeDecline, emailAfterHours, emailSentimentRisk, emailResponseDelay } = req.body;
       let baseScore = satisfaction < 5 ? 75 : (satisfaction < 8 ? 40 : 15);
       if (emailVolumeDecline) baseScore += 12;
@@ -288,7 +293,6 @@ async function startServer() {
       const riskScore = Math.min(Math.max(baseScore, 5), 95);
       const riskLevel = riskScore > 70 ? 'High' : (riskScore > 30 ? 'Medium' : 'Low');
 
-      // Provide a fallback response if the API quota is exceeded or another error occurs
       const fallbacks: Record<string, { decisionPath: any[], recommendations: string[] }> = {
         en: {
           decisionPath: [
@@ -383,7 +387,6 @@ async function startServer() {
     });
     app.use(vite.middlewares);
     
-    // Explicitly add catch-all for development as well, just in case
     app.get('*', (req, res) => {
       res.sendFile(path.join(process.cwd(), 'index.html'));
     });
